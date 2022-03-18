@@ -352,7 +352,10 @@ class FreeplayState extends MusicBeatState
 				vocals.looped = true;
 				vocals.volume = 0.7;
 				Conductor.changeBPM(PlayState.SONG.bpm);
-				instPlaying = curSelected;
+				for (i in 0...iconArray.length)
+					iconArray[i].canBounce = false;
+				iconArray[instPlaying].canBounce = true;
+				curPlaying = true;
 				#end
 			}
 		}
@@ -406,6 +409,8 @@ class FreeplayState extends MusicBeatState
 
 		if (FlxG.camera.zoom < 1.35 && ClientPrefs.camZooms && curBeat % 1 == 0)
 			FlxG.camera.zoom += 0.015;
+		if (curPlaying)
+			iconArray[instPlaying].bounce();
 	}
 
 	public static function destroyFreeplayVocals() {
