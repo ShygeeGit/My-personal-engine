@@ -225,6 +225,10 @@ class PlayState extends MusicBeatState
 	public var scoreTxt:FlxText;
 	var timeTxt:FlxText;
 	var scoreTxtTween:FlxTween;
+	var sickTxtTween:FlxTween;
+	var goodTxtTween:FlxTween;
+	var badTxtTween:FlxTween;
+	var shitTxtTween:FlxTween;
 
 	public static var campaignScore:Int = 0;
 	public static var campaignMisses:Int = 0;
@@ -269,6 +273,22 @@ class PlayState extends MusicBeatState
 	
 	// Less laggy controls
 	private var keysArray:Array<Dynamic>;
+
+	var sickCounter:Int;
+	var goodCounter:Int;
+	var badCounter:Int;
+	var shitCounter:Int;
+
+	var sickCounterTxt:FlxText;
+	var goodCounterTxt:FlxText;
+	var badCounterTxt:FlxText;
+	var shitCounterTxt:FlxText;
+
+	var comboCounterTxt:FlxText;
+
+	var totalNotesTxt:FlxText;
+
+	var tnh:Int = 0;
 
 	override public function create()
 	{
@@ -1049,9 +1069,48 @@ class PlayState extends MusicBeatState
 			botplayTxt.y = timeBarBG.y - 78;
 		}
 
+		sickCounterTxt = new FlxText(10, FlxG.height - 204, 0, "Sicks!: " + sickCounter, 50);
+		sickCounterTxt.scrollFactor.set();
+		sickCounterTxt.setFormat(Paths.font("vcr.ttf"), 16, FlxColor.WHITE, LEFT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+		sickCounterTxt.size = 18;
+		add(sickCounterTxt);
+		goodCounterTxt = new FlxText(10, FlxG.height - 184, 0, "Goods: " + goodCounter, 50);
+		goodCounterTxt.scrollFactor.set();
+		goodCounterTxt.setFormat(Paths.font("vcr.ttf"), 16, FlxColor.WHITE, LEFT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+		goodCounterTxt.size = 18;
+		add(goodCounterTxt);
+		badCounterTxt = new FlxText(10, FlxG.height - 164, 0, "Bads: " + badCounter, 50);
+		badCounterTxt.scrollFactor.set();
+		badCounterTxt.setFormat(Paths.font("vcr.ttf"), 16, FlxColor.WHITE, LEFT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+		badCounterTxt.size = 18;
+		add(badCounterTxt);
+		shitCounterTxt = new FlxText(10, FlxG.height - 144, 0, "Shits: " + shitCounter, 50);
+		shitCounterTxt.scrollFactor.set();
+		shitCounterTxt.setFormat(Paths.font("vcr.ttf"), 16, FlxColor.WHITE, LEFT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+		shitCounterTxt.size = 18;
+		add(shitCounterTxt);
+
+		comboCounterTxt = new FlxText(10, FlxG.height - 244, 0, "Combo: " + combo, 70);
+		comboCounterTxt.scrollFactor.set();
+		comboCounterTxt.setFormat(Paths.font("vcr.ttf"), 16, FlxColor.WHITE, LEFT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+		comboCounterTxt.size = 18;
+		add(comboCounterTxt);
+
+		totalNotesTxt = new FlxText(10, FlxG.height - 264, 0, "Total Notes Hit: " + tnh, 70);
+		totalNotesTxt.scrollFactor.set();
+		totalNotesTxt.setFormat(Paths.font("vcr.ttf"), 16, FlxColor.WHITE, LEFT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+		totalNotesTxt.size = 18;
+		add(totalNotesTxt);
+
 		strumLineNotes.cameras = [camHUD];
 		grpNoteSplashes.cameras = [camHUD];
 		notes.cameras = [camHUD];
+		sickCounterTxt.cameras = [camHUD];
+		badCounterTxt.cameras = [camHUD];
+		goodCounterTxt.cameras = [camHUD];
+		shitCounterTxt.cameras = [camHUD];
+		comboCounterTxt.cameras = [camHUD];
+		totalNotesTxt.cameras = [camHUD];
 		healthBar.cameras = [camHUD];
 		healthBarBG.cameras = [camHUD];
 		iconP1.cameras = [camHUD];
@@ -2307,6 +2366,14 @@ class PlayState extends MusicBeatState
 
 		super.update(elapsed);
 
+		sickCounterTxt.text = 'Sicks!: ' + sickCounter;
+		goodCounterTxt.text = 'Goods: ' + goodCounter;
+		badCounterTxt.text = 'Bads: ' + badCounter;
+		shitCounterTxt.text = 'Shits: ' + shitCounter;
+		comboCounterTxt.text = 'Combo: ' + combo;
+		tnh = sickCounter + goodCounter + badCounter + shitCounter;
+		totalNotesTxt.text = 'Total Notes Hit: ' + tnh;
+
 		if(ratingName == '?') {
 			scoreTxt.text = 'Score: ' + songScore + ' | Misses: ' + songMisses + ' | Rating: ' + ratingName;
 		} else {
@@ -3354,27 +3421,36 @@ class PlayState extends MusicBeatState
 		{
 			case "shit": // shit
 				totalNotesHit += 0;
+				shitCounter += 1;
 				note.ratingMod = 0;
 				score = 50;
 				if(!note.ratingDisabled) shits++;
 			case "bad": // bad
 				totalNotesHit += 0.5;
+				badCounter += 1;
 				note.ratingMod = 0.5;
 				score = 100;
 				if(!note.ratingDisabled) bads++;
 			case "good": // good
 				totalNotesHit += 0.75;
+				goodCounter += 1;
 				note.ratingMod = 0.75;
 				score = 200;
 				if(!note.ratingDisabled) goods++;
 			case "sick": // sick
 				totalNotesHit += 1;
+				sickCounter += 1;
 				note.ratingMod = 1;
 				if(!note.ratingDisabled) sicks++;
 		}
 		note.rating = daRating;
 
 		if(daRating == 'sick' && !note.noteSplashDisabled)
+		{
+			spawnNoteSplashOnNote(note);
+		}
+
+		if(note.hitByOpponent && !note.noteSplashDisabled)
 		{
 			spawnNoteSplashOnNote(note);
 		}
@@ -3398,6 +3474,62 @@ class PlayState extends MusicBeatState
 				scoreTxtTween = FlxTween.tween(scoreTxt.scale, {x: 1, y: 1}, 0.2, {
 					onComplete: function(twn:FlxTween) {
 						scoreTxtTween = null;
+					}
+				});
+			}
+
+			if(daRating == 'sick' && ClientPrefs.scoreZoom)
+			{
+				if(sickTxtTween != null) {
+					sickTxtTween.cancel();
+				}
+				sickCounterTxt.scale.x = 1.075;
+				sickCounterTxt.scale.y = 1.075;
+				sickTxtTween = FlxTween.tween(sickCounterTxt.scale, {x: 1, y: 1}, 0.2, {
+					onComplete: function(twn:FlxTween) {
+						sickTxtTween = null;
+					}
+				});
+			}
+
+			if(daRating == 'good' && ClientPrefs.scoreZoom)
+			{
+				if(goodTxtTween != null) {
+					goodTxtTween.cancel();
+				}
+				goodCounterTxt.scale.x = 1.075;
+				goodCounterTxt.scale.y = 1.075;
+				goodTxtTween = FlxTween.tween(goodCounterTxt.scale, {x: 1, y: 1}, 0.2, {
+					onComplete: function(twn:FlxTween) {
+						goodTxtTween = null;
+					}
+				});
+			}
+
+			if(daRating == 'bad' && ClientPrefs.scoreZoom)
+			{
+				if(badTxtTween != null) {
+					badTxtTween.cancel();
+				}
+				badCounterTxt.scale.x = 1.075;
+				badCounterTxt.scale.y = 1.075;
+				badTxtTween = FlxTween.tween(badCounterTxt.scale, {x: 1, y: 1}, 0.2, {
+					onComplete: function(twn:FlxTween) {
+						badTxtTween = null;
+					}
+				});
+			}
+
+			if(daRating == 'shit' && ClientPrefs.scoreZoom)
+			{
+				if(shitTxtTween != null) {
+					shitTxtTween.cancel();
+				}
+				shitCounterTxt.scale.x = 1.075;
+				shitCounterTxt.scale.y = 1.075;
+				shitTxtTween = FlxTween.tween(shitCounterTxt.scale, {x: 1, y: 1}, 0.2, {
+					onComplete: function(twn:FlxTween) {
+						shitTxtTween = null;
 					}
 				});
 			}
@@ -3852,6 +3984,9 @@ class PlayState extends MusicBeatState
 		}
 		StrumPlayAnim(true, Std.int(Math.abs(note.noteData)) % 4, time);
 		note.hitByOpponent = true;
+		if(!note.noteSplashDisabled && !note.isSustainNote) {
+			spawnNoteSplashOnNote(note);
+		}
 
 		callOnLuas('opponentNoteHit', [notes.members.indexOf(note), Math.abs(note.noteData), note.noteType, note.isSustainNote]);
 
@@ -3976,6 +4111,7 @@ class PlayState extends MusicBeatState
 	function spawnNoteSplashOnNote(note:Note) {
 		if(ClientPrefs.noteSplashes && note != null) {
 			var strum:StrumNote = playerStrums.members[note.noteData];
+			if(note.hitByOpponent) strum = opponentStrums.members[note.noteData];
 			if(strum != null) {
 				spawnNoteSplash(strum.x, strum.y, note.noteData, note);
 			}
